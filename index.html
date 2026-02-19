@@ -41,6 +41,8 @@ h1 {
 
 #reader {
     margin-top: 15px;
+    width: 100%;
+    height: 300px;
 }
 
 .status {
@@ -108,12 +110,26 @@ function onScanSuccess(decodedText, decodedResult) {
     sendToSheet(decodedText);
 }
 
-let html5QrcodeScanner = new Html5QrcodeScanner(
-    "reader",
-    { fps: 10, qrbox: 250 }
-);
+// استخدام الكاميرا مباشرة
+const html5QrCode = new Html5Qrcode("reader");
 
-html5QrcodeScanner.render(onScanSuccess);
+// البحث عن الكاميرات المتاحة
+Html5Qrcode.getCameras().then(cameras => {
+    if (cameras && cameras.length) {
+        const cameraId = cameras[0].id; // استخدام أول كاميرا متاحة
+        html5QrCode.start(
+            cameraId,
+            { fps: 10, qrbox: 250 },
+            onScanSuccess
+        ).catch(err => {
+            showStatus("Unable to start camera ❌", "error");
+        });
+    } else {
+        showStatus("No camera found ❌", "error");
+    }
+}).catch(err => {
+    showStatus("Error fetching cameras ❌", "error");
+});
 </script>
 
 </body>
