@@ -110,15 +110,21 @@ function onScanSuccess(decodedText, decodedResult) {
     sendToSheet(decodedText);
 }
 
-// استخدام الكاميرا مباشرة
 const html5QrCode = new Html5Qrcode("reader");
 
-// البحث عن الكاميرات المتاحة
 Html5Qrcode.getCameras().then(cameras => {
     if (cameras && cameras.length) {
-        const cameraId = cameras[0].id; // استخدام أول كاميرا متاحة
+        let backCamera = cameras.find(camera =>
+            camera.label.toLowerCase().includes("back") || 
+            camera.label.toLowerCase().includes("rear")
+        );
+
+        if (!backCamera) {
+            backCamera = cameras[0];
+        }
+
         html5QrCode.start(
-            cameraId,
+            backCamera.id,
             { fps: 10, qrbox: 250 },
             onScanSuccess
         ).catch(err => {
@@ -132,5 +138,7 @@ Html5Qrcode.getCameras().then(cameras => {
 });
 </script>
 
+
 </body>
 </html>
+
