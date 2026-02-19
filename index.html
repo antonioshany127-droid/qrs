@@ -34,11 +34,6 @@ body {
     box-shadow: 0 15px 35px rgba(0,0,0,0.3);
 }
 
-h1 {
-    margin-bottom: 15px;
-    font-size: 22px;
-}
-
 #reader {
     margin-top: 15px;
     width: 100%;
@@ -53,15 +48,10 @@ h1 {
     display: none;
 }
 
-.success {
-    background: #00c851;
-}
+.success { background: #00c851; }
+.error { background: #ff4444; }
 
-.error {
-    background: #ff4444;
-}
-
-#clickBtn {
+button {
     margin-top: 15px;
     padding: 10px 20px;
     font-size: 16px;
@@ -70,10 +60,9 @@ h1 {
     background-color: #ffbb33;
     color: white;
     cursor: pointer;
-    display: none;
 }
 
-#nameInput {
+input {
     margin-top: 10px;
     padding: 8px;
     width: 80%;
@@ -89,21 +78,22 @@ h1 {
 
 <div class="container">
     <h1>QR Scanner</h1>
-    <p>Enter your name:</p>
-    <input type="text" id="nameInput" placeholder="Your Name" />
+
+    <input type="text" id="nameInput" placeholder="Enter Your Name" />
+
+    <button id="scanBtn">Start Scan</button>
 
     <div id="reader"></div>
-
     <div id="statusBox" class="status"></div>
-    <button id="clickBtn">Click</button>
 </div>
 
 <script>
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzpe1dyzyLK_vSv4ELFvI8QYsCcGXtlYdUDUy_9PmlMhOZiEGhcUarqEGJSg70c-6Yifg/exec";
 
+const html5QrCode = new Html5Qrcode("reader");
 let statusBox = document.getElementById("statusBox");
-let clickBtn = document.getElementById("clickBtn");
 let nameInput = document.getElementById("nameInput");
+let scanBtn = document.getElementById("scanBtn");
 
 function showStatus(message, type) {
     statusBox.style.display = "block";
@@ -117,8 +107,8 @@ function showStatus(message, type) {
 
 function sendToSheet(qrText) {
     const userName = nameInput.value.trim();
-    if(!userName) {
-        showStatus("Please enter your name ❌", "error");
+    if (!userName) {
+        showStatus("Enter your name first ❌", "error");
         return;
     }
 
@@ -129,45 +119,41 @@ function sendToSheet(qrText) {
             qrValue: qrText
         })
     })
-    .then(response => {
-        showStatus("Saved Successfully ✅", "success");
-        clickBtn.style.display = "inline-block";
+    .then(() => {
+        showStatus("Done ✅", "success");
     })
-    .catch(error => {
-        showStatus("Error Sending Data ❌", "error");
+    .catch(() => {
+        showStatus("Error ❌", "error");
     });
 }
 
-function onScanSuccess(decodedText, decodedResult) {
+function onScanSuccess(decodedText) {
     html5QrCode.stop().then(() => {
         sendToSheet(decodedText);
-    }).catch(err => {
-        showStatus("Error stopping camera ❌", "error");
     });
 }
 
-const html5QrCode = new Html5Qrcode("reader");
+scanBtn.addEventListener("click", () => {
 
-Html5Qrcode.getCameras().then(cameras => {
-    if (cameras && cameras.length) {
-        let backCamera = cameras.find(camera =>
-            camera.label.toLowerCase().includes("back") || 
-            camera.label.toLowerCase().includes("rear")
-        );
-        if (!backCamera) backCamera = cameras[0];
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras.length) {
 
-        html5QrCode.start(
-            backCamera.id,
-            { fps: 10, qrbox: 250 },
-            onScanSuccess
-        ).catch(err => {
-            showStatus("Unable to start camera ❌", "error");
-        });
-    } else {
-        showStatus("No camera found ❌", "error");
-    }
-}).catch(err => {
-    showStatus("Error fetching cameras ❌", "error");
+            let backCamera = cameras.find(camera =>
+                camera.label.toLowerCase().includes("back") ||
+                camera.label.toLowerCase().includes("rear")
+            );
+
+            if (!backCamera) backCamera = cameras[0];
+
+            html5QrCode.start(
+                backCamera.id,
+                { fps: 10, qrbox: 250 },
+                onScanSuccess
+            );
+        } else {
+            showStatus("No camera found ❌", "error");
+        }
+    });
 });
 </script>
 
