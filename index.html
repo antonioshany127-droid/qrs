@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Attendance</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: white;
+}
+
+.container {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
+    padding: 30px;
+    border-radius: 20px;
+    width: 350px;
+    text-align: center;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+}
+
+h1 {
+    margin-bottom: 15px;
+    font-size: 22px;
+}
+
+#reader {
+    margin-top: 15px;
+}
+
+.status {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: none;
+}
+
+.success {
+    background: #00c851;
+}
+
+.error {
+    background: #ff4444;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>QR Scanner</h1>
+    <p>Scanning as: <strong>Fam Gerges</strong></p>
+
+    <div id="reader"></div>
+
+    <div id="statusBox" class="status"></div>
+</div>
+
+<script>
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzpe1dyzyLK_vSv4ELFvI8QYsCcGXtlYdUDUy_9PmlMhOZiEGhcUarqEGJSg70c-6Yifg/exec";
+const FIXED_NAME = "Fam";
+
+let statusBox = document.getElementById("statusBox");
+
+function showStatus(message, type) {
+    statusBox.style.display = "block";
+    statusBox.className = "status " + type;
+    statusBox.innerText = message;
+
+    setTimeout(() => {
+        statusBox.style.display = "none";
+    }, 3000);
+}
+
+function sendToSheet(qrText) {
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({
+            name: FIXED_NAME,
+            qrValue: qrText
+        })
+    })
+    .then(response => {
+        showStatus("Saved Successfully ✅", "success");
+    })
+    .catch(error => {
+        showStatus("Error Sending Data ❌", "error");
+    });
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+    sendToSheet(decodedText);
+}
+
+let html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    { fps: 10, qrbox: 250 }
+);
+
+html5QrcodeScanner.render(onScanSuccess);
+</script>
+
+</body>
+</html>
